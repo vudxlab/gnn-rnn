@@ -1,0 +1,6 @@
+Average validation accuracy across 1 folds: 0.7656 ± 0.0000
+Average test accuracy across 1 folds: 0.7589 ± 0.0000
+Best fold: 1 with validation accuracy: 0.7656
+
+Detailed results for each fold:
+Fold 1: Validation accuracy = 0.7656, Test accuracy = 0.7589

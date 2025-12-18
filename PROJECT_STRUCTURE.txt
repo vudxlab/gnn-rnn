@@ -1,0 +1,483 @@
+================================================================================
+GNN-RNN FRAMEWORK - PROJECT STRUCTURE
+================================================================================
+
+A modular deep learning framework for structural health monitoring using
+Graph Neural Networks (GNN), Recurrent Neural Networks (RNN), LSTM, and
+hybrid architectures.
+
+================================================================================
+DIRECTORY TREE
+================================================================================
+
+gnn-rnn/
+│
+├── data/                           # Dataset directory
+│   ├── cdv103/                     # CDV103 dataset
+│   │   ├── SETUP1_TH1.mat          # Setup 1, threshold 1
+│   │   ├── SETUP1_TH2.mat          # Setup 1, threshold 2
+│   │   ├── SETUP1_TH3.mat          # Setup 1, threshold 3
+│   │   ├── SETUP1_TH4.mat          # Setup 1, threshold 4
+│   │   ├── SETUP1_TH5.mat          # Setup 1, threshold 5
+│   │   └── SETUP1_TH6.mat          # Setup 1, threshold 6
+│   │
+│   └── z24/                        # Z24 Bridge dataset
+│       ├── 01setup05.mat           # Setup 05, configuration 1
+│       ├── 02setup05.mat           # Setup 05, configuration 2
+│       ├── 03setup05.mat
+│       ├── 04setup05.mat
+│       ├── 05setup05.mat
+│       ├── 06setup05.mat
+│       ├── 07setup05.mat
+│       ├── 08setup05.mat
+│       ├── 09setup05.mat
+│       ├── 10setup05.mat
+│       ├── 11setup05.mat
+│       ├── 12setup05.mat
+│       ├── 13setup05.mat
+│       ├── 14setup05.mat
+│       ├── 15setup05.mat
+│       ├── 16setup05.mat
+│       └── 17setup05.mat           # Setup 05, configuration 17
+│
+├── configs/                        # Configuration files (YAML)
+│   ├── z24_config.yaml             # Z24 dataset configuration
+│   └── cdv103_config.yaml          # CDV103 dataset configuration
+│
+├── src/                            # Source code (modular design)
+│   │
+│   ├── __init__.py                 # Package initialization
+│   │
+│   ├── data/                       # Data loading and preprocessing
+│   │   ├── __init__.py
+│   │   ├── loader.py               # DataLoader class for Z24/CDV103
+│   │   ├── augmentation.py         # DataAugmenter class (5 techniques)
+│   │   └── preprocessing.py        # DataPreprocessor class (reshape, PCA)
+│   │
+│   ├── models/                     # Model architectures
+│   │   ├── __init__.py             # Model registry
+│   │   ├── base.py                 # BaseModel abstract class
+│   │   ├── rnn.py                  # RNN, LSTM models
+│   │   ├── gnn.py                  # GNN (Graph Neural Network)
+│   │   ├── gnn_rnn.py              # GNN-RNN hybrid models
+│   │   └── gnn_lstm.py             # GNN-LSTM hybrid models
+│   │
+│   ├── training/                   # Training utilities
+│   │   ├── __init__.py
+│   │   ├── trainer.py              # ModelTrainer class (K-Fold CV)
+│   │   └── callbacks.py            # Training callbacks
+│   │
+│   ├── evaluation/                 # Evaluation and visualization
+│   │   ├── __init__.py
+│   │   ├── metrics.py              # Evaluation metrics
+│   │   └── visualization.py        # Plotting functions
+│   │
+│   └── utils/                      # Utility functions
+│       ├── __init__.py
+│       └── config.py               # Configuration utilities
+│
+├── scripts/                        # Command-line scripts
+│   ├── prepare_data.py             # Data preparation pipeline
+│   ├── train.py                    # Model training script
+│   └── evaluate.py                 # Model evaluation script
+│
+├── outputs/                        # Output directory (auto-created)
+│   ├── z24/                        # Z24 dataset outputs
+│   │   ├── models/                 # Trained models (.h5)
+│   │   ├── history/                # Training history (.pkl)
+│   │   ├── results/                # Results (.txt)
+│   │   └── plots/                  # Visualizations (.png)
+│   │
+│   └── cdv103/                     # CDV103 dataset outputs
+│       ├── models/
+│       ├── history/
+│       ├── results/
+│       └── plots/
+│
+├── requirements.txt                # Python dependencies
+├── setup.py                        # Package setup script
+├── .gitignore                      # Git ignore rules
+│
+├── README.md                       # Main documentation
+├── QUICKSTART.md                   # Quick start guide
+├── IMPLEMENTATION_SUMMARY.md       # Implementation details
+└── PROJECT_STRUCTURE.txt           # This file
+
+================================================================================
+FILE DESCRIPTIONS
+================================================================================
+
+DATA MODULE (src/data/)
+-----------------------
+
+loader.py
+  - DataLoader class
+  - Loads Z24 (17 files) and CDV103 (6 files) datasets
+  - Handles different .mat file structures
+  - Validates and preprocesses raw data
+  - Returns: data array, labels array
+
+augmentation.py
+  - DataAugmenter class
+  - 5 augmentation techniques:
+    * add_noise: Gaussian noise addition
+    * reverse: Time series reversal
+    * crop_pad: Random crop and pad
+    * time_warp: Temporal warping
+    * random_shift: Random shifting
+  - Configurable augmentation weights
+  - Maintains data shape consistency
+
+preprocessing.py
+  - DataPreprocessor class
+  - reshape_data(): Convert to (n_samples, n_segments, n_features)
+  - apply_pca(): Dimensionality reduction
+  - split_data(): Train/val/test split with stratification
+  - Reproducible with random seed
+
+MODELS MODULE (src/models/)
+---------------------------
+
+base.py
+  - BaseModel abstract class
+  - Common interface for all models
+  - Methods: build(), compile(), get_model(), summary(), save(), load()
+  - All models inherit from BaseModel
+
+rnn.py
+  - RNNModel: Simple RNN for temporal modeling
+  - LSTMModel: LSTM for long-term dependencies
+  - Configurable units and dropout
+
+gnn.py
+  - GNNModel: Graph Convolutional Network
+  - Treats sensors as graph nodes
+  - Captures spatial relationships
+  - Temporal graph structure for time series
+  - Global pooling (max/avg/flatten)
+
+gnn_rnn.py
+  - GNNRNNModel: GNN + RNN hybrid
+    * GNN layers: Spatial feature extraction
+    * RNN layers: Temporal modeling
+  - AttentionGNNRNNModel: With attention mechanism
+    * Focuses on important time steps
+    * Better interpretability
+
+gnn_lstm.py
+  - GNNLSTMModel: GNN + LSTM hybrid
+    * GNN layers: Spatial patterns
+    * LSTM layers: Long-term temporal dependencies
+  - AttentionGNNLSTMModel: With attention
+    * Attention on temporal features
+  - BiLSTMGNNModel: Bidirectional LSTM + GNN
+    * Captures past and future context
+
+TRAINING MODULE (src/training/)
+-------------------------------
+
+trainer.py
+  - ModelTrainer class
+  - K-Fold cross validation
+  - Automatic best model selection
+  - GPU/CPU device selection
+  - Progress tracking and logging
+  - Save models, histories, results
+
+callbacks.py
+  - get_callbacks() function
+  - EarlyStopping: Stop when validation stops improving
+  - ReduceLROnPlateau: Reduce learning rate when plateaued
+  - TerminateOnNaN: Stop on NaN loss
+
+EVALUATION MODULE (src/evaluation/)
+-----------------------------------
+
+metrics.py
+  - evaluate_model(): Evaluate on test set
+  - compute_confusion_matrix(): Generate confusion matrix
+  - compare_models(): Compare multiple models
+  - Classification reports
+
+visualization.py
+  - plot_training_history(): Accuracy and loss curves
+  - plot_confusion_matrix(): Confusion matrix heatmap
+  - plot_model_comparison(): Bar chart comparison
+  - plot_multiple_histories(): Compare training curves
+
+UTILITIES MODULE (src/utils/)
+------------------------------
+
+config.py
+  - load_config(): Load YAML/JSON config
+  - save_config(): Save configuration
+  - validate_config(): Validate config structure
+  - Error handling for missing keys
+
+SCRIPTS (scripts/)
+------------------
+
+prepare_data.py
+  - Load raw .mat files
+  - Apply augmentation
+  - Reshape data into segments
+  - Apply PCA (optional)
+  - Save processed .npy files
+  Usage: python scripts/prepare_data.py --config configs/z24_config.yaml
+
+train.py
+  - Load processed data
+  - Build and compile model
+  - Train with K-Fold cross validation
+  - Save best model, history, results
+  - Support for all 8 model types
+  Usage: python scripts/train.py --config configs/z24_config.yaml --model gnn_lstm
+
+evaluate.py
+  - Load trained model
+  - Evaluate on test set
+  - Generate visualizations
+  - Compare multiple models (optional)
+  Usage: python scripts/evaluate.py --config configs/z24_config.yaml --compare
+
+================================================================================
+MODEL ARCHITECTURES
+================================================================================
+
+Available Models:
+-----------------
+
+1. RNN (rnn.py)
+   - Simple RNN for basic temporal patterns
+   - Architecture: Input → RNN → RNN → Flatten → Dense → Output
+   - Parameters: units, dropout
+
+2. LSTM (rnn.py)
+   - LSTM for long-term dependencies
+   - Architecture: Input → LSTM → LSTM → Flatten → Dense → Output
+   - Parameters: units, dropout
+
+3. GNN (gnn.py)
+   - Graph Neural Network for spatial relationships
+   - Architecture: Input → GNN → GNN → GlobalPool → Dense → Output
+   - Parameters: gnn_units, dropout, pool_type
+
+4. GNN-RNN (gnn_rnn.py)
+   - Hybrid for spatial-temporal modeling
+   - Architecture: Input → GNN → RNN → Flatten → Dense → Output
+   - Parameters: gnn_units, rnn_units, dropout_gnn, dropout_rnn
+
+5. GNN-LSTM (gnn_lstm.py)
+   - Hybrid with long-term memory
+   - Architecture: Input → GNN → LSTM → Flatten → Dense → Output
+   - Parameters: gnn_units, lstm_units, dropout_gnn, dropout_lstm
+
+6. Attention-GNN-RNN (gnn_rnn.py)
+   - GNN-RNN with attention mechanism
+   - Architecture: Input → GNN → RNN → Attention → Dense → Output
+   - Focuses on important time steps
+
+7. Attention-GNN-LSTM (gnn_lstm.py)
+   - GNN-LSTM with attention mechanism
+   - Architecture: Input → GNN → LSTM → Attention → Dense → Output
+   - Enhanced pattern recognition
+
+8. BiLSTM-GNN (gnn_lstm.py)
+   - Bidirectional LSTM with GNN
+   - Architecture: Input → GNN → BiLSTM → Flatten → Dense → Output
+   - Captures both past and future context
+
+================================================================================
+WORKFLOW
+================================================================================
+
+1. DATA PREPARATION
+   ----------------
+   Input:  Raw .mat files (data/z24/ or data/cdv103/)
+   Process:
+     a) Load data with DataLoader
+     b) Augment with DataAugmenter (optional)
+     c) Reshape with DataPreprocessor
+     d) Apply PCA (optional)
+   Output: reshaped_data.npy, reshaped_labels.npy, pca_data.npy
+
+2. MODEL TRAINING
+   --------------
+   Input:  Processed .npy files
+   Process:
+     a) Load data
+     b) Build model (choose from 8 architectures)
+     c) Train with K-Fold cross validation
+     d) Save best model from each fold
+   Output: best_<model>_model.h5, history.pkl, results.txt
+
+3. MODEL EVALUATION
+   ----------------
+   Input:  Trained model (.h5)
+   Process:
+     a) Load model
+     b) Evaluate on test set
+     c) Compute metrics
+     d) Generate visualizations
+   Output: confusion_matrix.png, training_history.png, comparison.png
+
+================================================================================
+CONFIGURATION
+================================================================================
+
+Config files (configs/*.yaml) contain:
+
+dataset:
+  - type: z24 or cdv103
+  - name: Dataset display name
+
+data:
+  - data_dir: Path to data directory
+  - augmentation: Augmentation settings
+  - reshape: Segmentation parameters
+  - pca: PCA settings
+
+model:
+  - name: Model architecture name
+  - params: Model-specific hyperparameters
+
+training:
+  - epochs, batch_size, n_splits
+  - seed: Random seed for reproducibility
+  - device: GPU/CPU selection
+  - callbacks: Early stopping, learning rate scheduling
+
+output:
+  - base_dir: Output directory
+
+================================================================================
+USAGE EXAMPLES
+================================================================================
+
+1. BASIC USAGE
+   -----------
+   # Prepare data
+   python scripts/prepare_data.py --config configs/z24_config.yaml
+
+   # Train model
+   python scripts/train.py --config configs/z24_config.yaml --model gnn_lstm
+
+   # Evaluate
+   python scripts/evaluate.py --config configs/z24_config.yaml
+
+2. COMPARE MODELS
+   --------------
+   # Train multiple models
+   for model in rnn lstm gnn gnn_rnn gnn_lstm; do
+     python scripts/train.py --config configs/z24_config.yaml --model $model
+   done
+
+   # Compare results
+   python scripts/evaluate.py --config configs/z24_config.yaml --compare
+
+3. CUSTOM CONFIGURATION
+   --------------------
+   # Edit config file
+   vim configs/z24_config.yaml
+
+   # Change model parameters, epochs, batch size, etc.
+   # Then run training
+   python scripts/train.py --config configs/z24_config.yaml
+
+4. PROGRAMMATIC USAGE
+   ------------------
+   from src.data import DataLoader, DataAugmenter
+   from src.models import GNNLSTMModel
+   from src.training import ModelTrainer
+
+   # Load and augment data
+   loader = DataLoader('z24', './data/z24')
+   data, labels = loader.load_data()
+
+   # Build model
+   model = GNNLSTMModel(input_shape=(27, 50), num_classes=10)
+
+   # Train
+   trainer = ModelTrainer(model, n_splits=5, epochs=1000)
+   results = trainer.train(X_train, y_train, X_test, y_test)
+
+================================================================================
+DEPENDENCIES
+================================================================================
+
+Core:
+  - numpy>=1.21.0
+  - scipy>=1.7.0
+  - scikit-learn>=1.0.0
+  - pandas>=1.3.0
+
+Deep Learning:
+  - tensorflow>=2.8.0
+  - keras>=2.8.0
+  - spektral>=1.2.0 (Graph Neural Networks)
+
+Visualization:
+  - matplotlib>=3.4.0
+  - seaborn>=0.11.0
+
+Configuration:
+  - pyyaml>=5.4.0
+
+Utilities:
+  - tqdm>=4.62.0
+
+================================================================================
+OUTPUT STRUCTURE
+================================================================================
+
+outputs/z24/ (or cdv103)
+│
+├── models/
+│   ├── best_rnn_model.h5
+│   ├── best_lstm_model.h5
+│   ├── best_gnn_model.h5
+│   ├── best_gnn_rnn_model.h5
+│   ├── best_gnn_lstm_model.h5
+│   ├── best_attention_gnn_rnn_model.h5
+│   ├── best_attention_gnn_lstm_model.h5
+│   └── best_bilstm_gnn_model.h5
+│
+├── history/
+│   ├── best_rnn_history.pkl
+│   ├── best_lstm_history.pkl
+│   └── ...
+│
+├── results/
+│   ├── rnn_results.txt
+│   ├── lstm_results.txt
+│   └── ...
+│
+└── plots/
+    ├── rnn_confusion_matrix.png
+    ├── rnn_training_history.png
+    ├── lstm_confusion_matrix.png
+    ├── lstm_training_history.png
+    ├── models_comparison_accuracy.png
+    └── models_comparison_loss.png
+
+================================================================================
+KEY FEATURES
+================================================================================
+
+✅ Graph Neural Networks for spatial modeling
+✅ RNN/LSTM for temporal modeling
+✅ Hybrid architectures combining spatial-temporal features
+✅ Attention mechanisms for interpretability
+✅ Modular, extensible design
+✅ Configuration-driven workflow
+✅ K-Fold cross validation
+✅ Automatic best model selection
+✅ Comprehensive evaluation and visualization
+✅ GPU/CPU support
+✅ Data augmentation
+✅ PCA dimensionality reduction
+✅ Multiple dataset support
+
+================================================================================
+END OF PROJECT STRUCTURE
+================================================================================

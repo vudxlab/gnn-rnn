@@ -1,0 +1,83 @@
+# Configuration for Z24 Bridge Dataset
+
+dataset:
+  type: z24
+  name: "Z24 Bridge"
+
+data:
+  data_dir: "./data/z24"
+  output_dir: "./outputs/z24"
+
+  # Data augmentation
+  augmentation:
+    enabled: true
+    num_augmentations: 10
+    weights: [0.6, 0.1, 0.1, 0.1, 0.1]  # [noise, reverse, crop_pad, time_warp, random_shift]
+  
+  # Data reshaping
+  reshape:
+    segments_per_sample: 27
+    segment_length: 4000
+    auto_adjust: 'truncate'  # Options: 'none', 'truncate', 'pad' - handles data length mismatch
+  
+  # PCA
+  pca:
+    enabled: false
+    n_components: 50
+    # variance_ratio: 0.95  # Alternative to n_components
+  
+  # Train/test split
+  split:
+    test_size: 0.3
+    val_size: 0.5
+
+model:
+  # Available models: rnn, lstm, gnn, gnn_rnn, gnn_lstm, attention_gnn_rnn, attention_gnn_lstm, bilstm_gnn
+  name: "gnn"
+
+  # Model-specific parameters
+  params:
+    # ===== RNN Model =====
+    rnn_units: 256
+    rnn_dropout: 0.6
+
+    # ===== LSTM Model =====
+    lstm_units: 512
+    lstm_dropout: 0.2
+
+    # ===== GNN Model =====
+    gnn_units: [128, 64]
+    gnn_dropout: 0.5
+    gnn_pool: 'max'  # Options: 'max', 'avg', 'flatten'
+
+    # ===== GNN-RNN Hybrid Model =====
+    gnn_rnn_units: 256
+    dropout_gnn: 0.3
+    dropout_rnn: 0.6
+
+    # ===== GNN-LSTM Hybrid Model =====
+    gnn_lstm_units: 200
+    dropout_gnn_lstm: 0.5
+
+training:
+  epochs: 1000
+  batch_size: 32
+  n_splits: 1  # K-Fold cross validation
+  kfold_type: 'stratified'  # Options: 'stratified' (recommended) or 'kfold'
+  seed: 42
+  device: "/GPU:0"  # or "/CPU:0"
+  
+  # Callbacks
+  callbacks:
+    patience: 50
+    min_delta: 0.00001
+    lr_patience: 10
+    lr_factor: 0.5
+    lr_min_delta: 0.0001
+    cooldown: 5
+
+output:
+  model_dir: "./outputs/z24/models"
+  history_dir: "./outputs/z24/history"
+  results_dir: "./outputs/z24/results"
+  plots_dir: "./outputs/z24/plots"
